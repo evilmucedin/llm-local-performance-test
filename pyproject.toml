@@ -13,6 +13,11 @@ dependencies = [
     "psutil>=5.9.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/evilmucedin/llm-local-performance-test"
+Repository = "https://github.com/evilmucedin/llm-local-performance-test"
+Issues = "https://github.com/evilmucedin/llm-local-performance-test/issues"
+
 [project.scripts]
 llm-local-perf = "llm_local_perf.__main__:main"
 cursor-ollama = "llm_local_perf.cursor_ollama:main"
