@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-local-performance-test"
+version = "0.1.0"
+description = "Benchmark local hardware and estimate annual LLM token throughput (Ollama + microbenchmarks)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "psutil>=5.9.0",
+]
+
+[project.scripts]
+llm-local-perf = "llm_local_perf.__main__:main"
+cursor-ollama = "llm_local_perf.cursor_ollama:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+llm_local_perf = ["data/*.txt"]
