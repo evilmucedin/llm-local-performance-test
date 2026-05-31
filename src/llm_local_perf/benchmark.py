@@ -152,6 +152,7 @@ def pick_small_local_model():
 
 def run_ollama_microbenchmark(timeout_seconds=5800, prompt=None, runs=10):
     model = pick_small_local_model()
+    print("I will use model '" + model + "'")
     if not model:
         return {"ran": False, "model": None, "tokens_per_sec": 0.0, "reason": "No local Ollama model found"}
 
