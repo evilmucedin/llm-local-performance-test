@@ -52,6 +52,12 @@ Environment:
 
 For GPU listing on Linux/NVIDIA, `nvidia-smi` should be on `PATH` if you want discrete VRAM reported.
 
+## Documentation
+
+- [Architecture](ARCHITECTURE.md) — package layout, execution modes, estimation flow, pricing assumptions, and output conventions.
+- [Coding-agent guide](AGENTS.md) — validation commands and advice for coding tools such as Claude Code and Pi.
+- [Claude guide](CLAUDE.md) — short Claude-specific entry point that links back to the canonical agent guide.
+
 ### Cursor + Ollama
 
 The **`cursor-ollama`** command ensures a local Ollama daemon, resolves/pulls a model, writes Cursor’s OpenAI-compatible Ollama settings, and optionally launches Cursor.
