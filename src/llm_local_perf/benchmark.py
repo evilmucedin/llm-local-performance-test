@@ -12,6 +12,8 @@ from importlib.resources import files
 
 import psutil
 
+from .pricing import CLAUDE_PRICE_LABEL, estimate_hourly_claude_output_cost, format_usd
+
 # Fixed ollama inference settings so all laptops are compared fairly.
 # num_ctx=512: tiny KV cache, works on weak/low-RAM hardware.
 # num_predict=100: fixed output length → stable tokens/sec measurement.
@@ -221,7 +223,19 @@ def estimate_tokens_per_year(cpu, memory, gpus, cpu_ops, mem_mb_s, has_ollama, o
     return int(max(base, 1) * 35_000)
 
 
-def print_quick_view(system, cpu, gpus, memory, cpu_ops, mem_bw, ollama_status, ollama_bench, bench_timeout, tokens):
+def print_quick_view(
+    system,
+    cpu,
+    gpus,
+    memory,
+    cpu_ops,
+    mem_bw,
+    ollama_status,
+    ollama_bench,
+    bench_timeout,
+    tokens,
+    hourly_claude_cost,
+):
     print("\nQuick view:")
     print(f"OS  : {system['os']}")
     print(f"PY  : {system['python']}")
@@ -241,6 +255,7 @@ def print_quick_view(system, cpu, gpus, memory, cpu_ops, mem_bw, ollama_status, 
     print(f"OTPS: {ollama_bench['tokens_per_sec']:.2f}")
     print(f"OTMO: {bench_timeout}")
     print(f"TYR : {tokens:,}")
+    print(f"T$/H: {format_usd(hourly_claude_cost)}/hr")
 
 
 def run() -> None:
@@ -330,5 +345,19 @@ def run() -> None:
     print(f"Ollama tokens_per_sec: {ollama_bench['tokens_per_sec']:.2f}")
     if not ollama_bench["ran"]:
         print(f"Ollama benchmark note: {ollama_bench['reason']}")
+    hourly_claude_cost = estimate_hourly_claude_output_cost(tokens)
     print(f"Estimated LLM tokens per year: {tokens:,}")
-    print_quick_view(system, cpu, gpus, memory, cpu_ops, mem_bw, ollama_status, ollama_bench, bench_timeout, tokens)
+    print(f"Estimated {CLAUDE_PRICE_LABEL} per hour: {format_usd(hourly_claude_cost)}/hr")
+    print_quick_view(
+        system,
+        cpu,
+        gpus,
+        memory,
+        cpu_ops,
+        mem_bw,
+        ollama_status,
+        ollama_bench,
+        bench_timeout,
+        tokens,
+        hourly_claude_cost,
+    )
