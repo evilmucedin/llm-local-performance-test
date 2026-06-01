@@ -4,13 +4,14 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776AB?logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![GitHub stars](https://img.shields.io/github/stars/evilmucedin/llm-local-performance-test?style=social)](https://github.com/evilmucedin/llm-local-performance-test)
 
-**Benchmark your laptop or desktop for local LLMs** — CPU/RAM/GPU probes, quick microbenchmarks, optional live [Ollama](https://ollama.ai) tokens/sec, and a rough **estimated LLM tokens per year**. Includes helpers to wire **Cursor** to Ollama (including over an ngrok tunnel). One dependency: `psutil`.
+**Benchmark your laptop or desktop for local LLMs** — CPU/RAM/GPU probes, quick microbenchmarks, optional live [Ollama](https://ollama.ai) tokens/sec, a rough **estimated LLM tokens per year**, and the equivalent hourly Claude output-token cost. Includes helpers to wire **Cursor** to Ollama (including over an ngrok tunnel). One dependency: `psutil`.
 
 **Repository:** [github.com/evilmucedin/llm-local-performance-test](https://github.com/evilmucedin/llm-local-performance-test)
 
 ## Why use it
 
 - **Comparable numbers** across machines (fixed Ollama `num_ctx` / `num_predict` on the full run).
+- **Claude cost comparison** — prints the estimated hourly dollar value of the annual token estimate at Claude output-token pricing.
 - **`--simple` mode** — no Ollama required; good for CI or air-gapped checks.
 - **`cursor-ollama`** — start/configure Ollama and merge OpenAI-compatible Ollama settings into Cursor’s `settings.json`.
 - **Apache-2.0** — use and fork freely.
