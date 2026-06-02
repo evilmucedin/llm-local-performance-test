@@ -51,6 +51,24 @@ Environment:
 
 For GPU listing on Linux/NVIDIA, `nvidia-smi` should be on `PATH` if you want discrete VRAM reported.
 
+### Ubuntu Ollama coding-model installer
+
+On Ubuntu/Debian-like machines, use the helper script to install Ollama and pull the best large coding model that fits the current hardware:
+
+```bash
+./scripts/install-best-coding-ollama-ubuntu.sh
+```
+
+The script queries the Ollama Library for available coding-model tags, reads published model sizes/context windows, checks local NVIDIA VRAM and system RAM, prints the compatibility table, then pulls the highest-priority compatible model. It currently prefers large coding models such as `qwen2.5-coder:32b`, `qwen3-coder:30b`, `codestral:22b`, and `deepseek-coder-v2:16b` when hardware allows them.
+
+Useful overrides:
+
+```bash
+DRY_RUN=1 ./scripts/install-best-coding-ollama-ubuntu.sh       # inspect selection only
+MODEL=qwen2.5-coder:32b ./scripts/install-best-coding-ollama-ubuntu.sh
+GPU_HEADROOM_GB=4 RAM_HEADROOM_GB=8 ./scripts/install-best-coding-ollama-ubuntu.sh
+```
+
 ### Cursor + Ollama
 
 The **`cursor-ollama`** command ensures a local Ollama daemon, resolves/pulls a model, writes Cursor’s OpenAI-compatible Ollama settings, and optionally launches Cursor.
