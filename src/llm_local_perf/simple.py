@@ -8,6 +8,8 @@ from pathlib import Path
 
 import psutil
 
+from .pricing import CLAUDE_PRICE_LABEL, estimate_hourly_claude_output_cost, format_usd
+
 
 def load_spec_v1() -> str:
     p = files("llm_local_perf").joinpath("data/spec_v1.txt")
@@ -122,4 +124,6 @@ def run() -> None:
         print(f"{key}: {value}")
     print(f"bandwidth_mb_per_sec: {memory_score:.2f}")
 
+    hourly_claude_cost = estimate_hourly_claude_output_cost(llm_tokens)
     print(f"\nEstimated LLM tokens per year: {llm_tokens:,}")
+    print(f"Estimated {CLAUDE_PRICE_LABEL} per hour: {format_usd(hourly_claude_cost)}/hr")
