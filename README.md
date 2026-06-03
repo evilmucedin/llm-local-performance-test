@@ -35,7 +35,7 @@ python run.py --simple
 ## Run
 
 ```bash
-# Full run (contacts Ollama API at OLLAMA_HOST if running)
+# Full run (contacts Ollama API at OLLAMA_HOST if running; uses the best installed model by default)
 llm-local-perf
 
 python -m llm_local_perf
@@ -49,7 +49,7 @@ python run.py --ollama-model qwen2.5-coder:7b
 llm-local-perf --simple
 ```
 
-Full-mode token/year and Claude-equivalent hourly cost estimates are adjusted by the selected Ollama model size when the model tag includes a size such as `:7b`, `:32b`, or `:0.5b`.
+By default, full mode selects the best installed Ollama model it can find, preferring non-embedding models with the largest parsed parameter count or downloaded size. Full-mode token/year and Claude-equivalent hourly cost estimates are adjusted by the selected Ollama model size when the model tag includes a size such as `:7b`, `:32b`, or `:0.5b`.
 
 Environment:
 

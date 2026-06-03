@@ -19,7 +19,7 @@ def main() -> None:
     parser.add_argument(
         "--ollama-model",
         metavar="MODEL",
-        help="Use this Ollama model for the full benchmark instead of auto-selecting a local model.",
+        help="Use this Ollama model for the full benchmark instead of selecting the best installed model.",
     )
     parser.add_argument(
         "--version",
