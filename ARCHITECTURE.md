@@ -53,6 +53,8 @@ Command:
 ```bash
 llm-local-perf
 python run.py
+llm-local-perf --ollama-model qwen2.5-coder:7b
+python run.py --ollama-model qwen2.5-coder:7b
 ```
 
 Flow:
@@ -61,11 +63,11 @@ Flow:
 2. Collect system, CPU, GPU, and memory metadata.
 3. Run local CPU and memory microbenchmarks.
 4. Check whether Ollama is installed and whether `OLLAMA_HOST` is reachable.
-5. If usable, select a small local model and run Ollama generation benchmarks with fixed settings:
+5. If usable, use the model from `--ollama-model` or select a small local model, then run Ollama generation benchmarks with fixed settings:
    - `num_ctx = 512`
    - `num_predict = 100`
    - `temperature = 0`
-6. Combine hardware score and Ollama tokens/sec into an annual token estimate.
+6. Combine hardware score, the Ollama model-size throughput multiplier, and Ollama tokens/sec into an annual token estimate.
 7. Print detailed sections plus a compact quick view.
 8. Print Claude-equivalent cost per hour beside the token estimate.
 
@@ -82,9 +84,10 @@ Inputs include:
 - detected discrete GPU memory;
 - CPU microbenchmark loops/sec;
 - memory copy throughput;
-- optional Ollama measured tokens/sec.
+- optional Ollama measured tokens/sec;
+- optional Ollama model size parsed from tags like `:7b`, `:32b`, or `:0.5b`.
 
-The full estimator gives extra weight to live Ollama throughput when it is available. The simple estimator uses only hardware-derived signals.
+The full estimator gives extra weight to live Ollama throughput when it is available. It also applies a rough model-size multiplier calibrated around 7B-class models: smaller model tags increase estimated tokens/year, while larger model tags decrease them. The simple estimator uses only hardware-derived signals.
 
 ## Claude-equivalent pricing
 
@@ -121,6 +124,8 @@ The CLI prints verbose sections first, then a compact quick view in full mode.
 
 Quick-view abbreviations include:
 
+- `OMOD`: Ollama model.
+- `OMUL`: Ollama model throughput multiplier.
 - `OTPS`: Ollama tokens/sec.
 - `TYR`: estimated tokens/year.
 - `T$/H`: Claude-equivalent dollars/hour.

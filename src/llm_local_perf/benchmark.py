@@ -4,6 +4,7 @@
 import json
 import os
 import platform
+import re
 import shutil
 import subprocess
 import time
@@ -152,11 +153,12 @@ def pick_small_local_model():
     return names[0]
 
 
-def run_ollama_microbenchmark(timeout_seconds=5800, prompt=None, runs=10):
-    model = pick_small_local_model()
-    print("I will use model '" + model + "'")
+def run_ollama_microbenchmark(timeout_seconds=5800, prompt=None, runs=10, model=None):
+    if model is None:
+        model = pick_small_local_model()
     if not model:
         return {"ran": False, "model": None, "tokens_per_sec": 0.0, "reason": "No local Ollama model found"}
+    print(f"I will use model '{model}'")
 
     if prompt is None:
         prompt = "Write a short paragraph about laptop performance benchmarking. Keep it factual."
@@ -207,8 +209,31 @@ def run_ollama_microbenchmark(timeout_seconds=5800, prompt=None, runs=10):
     }
 
 
-def estimate_tokens_per_year(cpu, memory, gpus, cpu_ops, mem_mb_s, has_ollama, ollama_tps=0.0):
+def estimate_model_throughput_factor(model: str | None) -> float:
+    """Return a rough throughput factor inferred from an Ollama model tag.
+
+    The hardware estimator is calibrated around common 7B-class local models.
+    Smaller models generally generate more tokens/sec; larger models generally
+    generate fewer. If the tag does not expose a size like ``:7b`` or ``-32b``,
+    leave the hardware estimate unchanged.
+    """
+    if not model:
+        return 1.0
+
+    match = re.search(r"(?:^|[-_:])([0-9]+(?:\.[0-9]+)?)b(?:$|[-_:])", model.lower())
+    if not match:
+        return 1.0
+
+    billion_params = float(match.group(1))
+    if billion_params <= 0:
+        return 1.0
+
+    return max(0.15, min(3.0, (7.0 / billion_params) ** 0.5))
+
+
+def estimate_tokens_per_year(cpu, memory, gpus, cpu_ops, mem_mb_s, has_ollama, ollama_tps=0.0, ollama_model=None):
     gpu_mem = sum(g["memory_gb"] for g in gpus)
+    model_factor = estimate_model_throughput_factor(ollama_model)
     base = (
         cpu["logical_cores"] * 60
         + memory["total_gb"] * 35
@@ -220,7 +245,7 @@ def estimate_tokens_per_year(cpu, memory, gpus, cpu_ops, mem_mb_s, has_ollama, o
         base *= 1.1
     if ollama_tps > 0:
         base += ollama_tps * 6
-    return int(max(base, 1) * 35_000)
+    return int(max(base * model_factor, 1) * 35_000)
 
 
 def print_quick_view(
@@ -252,13 +277,15 @@ def print_quick_view(
     print(f"OINS: {ollama_status['installed']}")
     print(f"OUSE: {ollama_status['usable']}")
     print(f"ORAN: {ollama_bench['ran']}")
+    print(f"OMOD: {ollama_bench['model']}")
+    print(f"OMUL: {estimate_model_throughput_factor(ollama_bench['model']):.2f}")
     print(f"OTPS: {ollama_bench['tokens_per_sec']:.2f}")
     print(f"OTMO: {bench_timeout}")
     print(f"TYR : {tokens:,}")
     print(f"T$/H: {format_usd(hourly_claude_cost)}/hr")
 
 
-def run() -> None:
+def run(ollama_model: str | None = None) -> None:
     spec = load_spec_v2()
     system = get_system_info()
     cpu = get_cpu_info()
@@ -271,12 +298,16 @@ def run() -> None:
     bench_timeout = int(os.getenv("OLLAMA_BENCH_TIMEOUT", "5800"))
     fast_timeout = max(1, bench_timeout // 10)
 
+    selected_ollama_model = ollama_model if ollama_model is not None else None
+    if ollama_status["usable"] and selected_ollama_model is None:
+        selected_ollama_model = pick_small_local_model()
+
     fast_ollama_bench = (
-        run_ollama_microbenchmark(timeout_seconds=fast_timeout, runs=10)
+        run_ollama_microbenchmark(timeout_seconds=fast_timeout, runs=10, model=selected_ollama_model)
         if ollama_status["usable"]
         else {
             "ran": False,
-            "model": None,
+            "model": selected_ollama_model,
             "tokens_per_sec": 0.0,
             "reason": ollama_status["reason"],
         }
@@ -291,11 +322,11 @@ def run() -> None:
     print(f"  reason: {fast_ollama_bench['reason']}")
 
     ollama_bench = (
-        run_ollama_microbenchmark(timeout_seconds=bench_timeout, runs=2)
+        run_ollama_microbenchmark(timeout_seconds=bench_timeout, runs=2, model=selected_ollama_model)
         if ollama_status["usable"]
         else {
             "ran": False,
-            "model": None,
+            "model": selected_ollama_model,
             "tokens_per_sec": 0.0,
             "reason": ollama_status["reason"],
         }
@@ -317,6 +348,7 @@ def run() -> None:
         mem_bw,
         has_ollama,
         ollama_bench["tokens_per_sec"],
+        ollama_bench["model"],
     )
 
     print("Specification (spec v2):")
@@ -342,6 +374,7 @@ def run() -> None:
     print(f"Ollama benchmark ran: {ollama_bench['ran']}")
     print(f"Ollama model: {ollama_bench['model']}")
     print(f"Ollama benchmark timeout_sec: {bench_timeout}")
+    print(f"Ollama model throughput multiplier: {estimate_model_throughput_factor(ollama_bench['model']):.2f}")
     print(f"Ollama tokens_per_sec: {ollama_bench['tokens_per_sec']:.2f}")
     if not ollama_bench["ran"]:
         print(f"Ollama benchmark note: {ollama_bench['reason']}")
