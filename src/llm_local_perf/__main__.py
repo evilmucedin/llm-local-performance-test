@@ -17,6 +17,11 @@ def main() -> None:
         help="Run the v1 estimator only (CPU/GPU/RAM microbenchmarks, no Ollama API).",
     )
     parser.add_argument(
+        "--ollama-model",
+        metavar="MODEL",
+        help="Use this Ollama model for the full benchmark instead of auto-selecting a local model.",
+    )
+    parser.add_argument(
         "--version",
         action="version",
         version=f"%(prog)s {__version__}",
@@ -25,7 +30,7 @@ def main() -> None:
     if args.simple:
         run_simple()
     else:
-        run_full()
+        run_full(ollama_model=args.ollama_model)
 
 
 if __name__ == "__main__":

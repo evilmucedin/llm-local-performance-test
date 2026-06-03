@@ -41,9 +41,15 @@ llm-local-perf
 python -m llm_local_perf
 python run.py
 
+# Full run with an explicit Ollama model
+llm-local-perf --ollama-model qwen2.5-coder:7b
+python run.py --ollama-model qwen2.5-coder:7b
+
 # Lighter path: no Ollama inference
 llm-local-perf --simple
 ```
+
+Full-mode token/year and Claude-equivalent hourly cost estimates are adjusted by the selected Ollama model size when the model tag includes a size such as `:7b`, `:32b`, or `:0.5b`.
 
 Environment:
 
