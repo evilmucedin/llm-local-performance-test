@@ -63,7 +63,7 @@ Flow:
 2. Collect system, CPU, GPU, and memory metadata.
 3. Run local CPU and memory microbenchmarks.
 4. Check whether Ollama is installed and whether `OLLAMA_HOST` is reachable.
-5. If usable, use the model from `--ollama-model` or select a small local model, then run Ollama generation benchmarks with fixed settings:
+5. If usable, use the model from `--ollama-model` or select the best installed Ollama model, then run Ollama generation benchmarks with fixed settings:
    - `num_ctx = 512`
    - `num_predict = 100`
    - `temperature = 0`
@@ -109,7 +109,7 @@ The benchmark talks to the Ollama HTTP API at `OLLAMA_HOST`, defaulting to `http
 
 Important endpoints:
 
-- `GET /api/tags` to discover local models.
+- `GET /api/tags` to discover local models. Default selection prefers non-embedding models with the largest parsed parameter count (`details.parameter_size` or tags like `:32b`) or downloaded size.
 - `POST /api/generate` to run non-streaming generation and read `eval_count` / `eval_duration`.
 
 ### Cursor helper

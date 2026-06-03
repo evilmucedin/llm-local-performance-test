@@ -133,7 +133,21 @@ def get_ollama_status():
         }
 
 
-def pick_small_local_model():
+def parse_model_billion_params(model: str | None, details: dict | None = None) -> float:
+    if details:
+        parameter_size = str(details.get("parameter_size", ""))
+        match = re.search(r"([0-9]+(?:\.[0-9]+)?)\s*b", parameter_size.lower())
+        if match:
+            return float(match.group(1))
+
+    if not model:
+        return 0.0
+
+    match = re.search(r"(?:^|[-_:])([0-9]+(?:\.[0-9]+)?)b(?:$|[-_:])", model.lower())
+    return float(match.group(1)) if match else 0.0
+
+
+def pick_best_local_model():
     try:
         req = urllib.request.Request(f"{OLLAMA_HOST}/api/tags")
         with urllib.request.urlopen(req, timeout=10) as resp:
@@ -141,21 +155,28 @@ def pick_small_local_model():
     except Exception:
         return None
 
-    names = [m["name"] for m in data.get("models", [])]
-    if not names:
+    models = [m for m in data.get("models", []) if m.get("name")]
+    if not models:
         return None
 
-    preferred_prefixes = ("tinyllama", "qwen2.5-coder:0.5b", "gemma:2b", "phi3:mini")
-    for prefix in preferred_prefixes:
-        for name in names:
-            if name.lower().startswith(prefix):
-                return name
-    return names[0]
+    non_embedding_models = [
+        m for m in models if not any(token in m["name"].lower() for token in ("embed", "embedding"))
+    ]
+    candidates = non_embedding_models or models
+
+    def score(model):
+        name = model["name"]
+        details = model.get("details") if isinstance(model.get("details"), dict) else {}
+        params = parse_model_billion_params(name, details)
+        size_bytes = model.get("size") or 0
+        return (params, size_bytes, name)
+
+    return max(candidates, key=score)["name"]
 
 
 def run_ollama_microbenchmark(timeout_seconds=5800, prompt=None, runs=10, model=None):
     if model is None:
-        model = pick_small_local_model()
+        model = pick_best_local_model()
     if not model:
         return {"ran": False, "model": None, "tokens_per_sec": 0.0, "reason": "No local Ollama model found"}
     print(f"I will use model '{model}'")
@@ -220,11 +241,9 @@ def estimate_model_throughput_factor(model: str | None) -> float:
     if not model:
         return 1.0
 
-    match = re.search(r"(?:^|[-_:])([0-9]+(?:\.[0-9]+)?)b(?:$|[-_:])", model.lower())
-    if not match:
+    billion_params = parse_model_billion_params(model)
+    if not billion_params:
         return 1.0
-
-    billion_params = float(match.group(1))
     if billion_params <= 0:
         return 1.0
 
@@ -300,7 +319,7 @@ def run(ollama_model: str | None = None) -> None:
 
     selected_ollama_model = ollama_model if ollama_model is not None else None
     if ollama_status["usable"] and selected_ollama_model is None:
-        selected_ollama_model = pick_small_local_model()
+        selected_ollama_model = pick_best_local_model()
 
     fast_ollama_bench = (
         run_ollama_microbenchmark(timeout_seconds=fast_timeout, runs=10, model=selected_ollama_model)
